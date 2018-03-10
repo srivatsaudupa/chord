@@ -110,7 +110,7 @@ public class Handler {
 
 			long ret =  (compressed[0] & 0xFF) << 24 | (compressed[1] & 0xFF) << 16 | (compressed[2] & 0xFF) << 8 | (compressed[3] & 0xFF);
 			ret = ret&(long)0xFFFFFFFFl;
-			return ret%32;
+			return ret;
 		}
 		return 0;
 	}
