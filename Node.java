@@ -524,6 +524,7 @@ public class Node {
 	 *      returns nothing.
 	 */
 	public void terminateNodeInstance() {
+		System.out.println(nextNode.toString());
 		this.handFilesOver(nextNode);
 		if (listener != null)
 			listener.toDie();
