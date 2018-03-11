@@ -631,9 +631,6 @@ public class Node {
 				this.filesTable.remove(element);
 			}
 		}
-		{
-
-		}
 		return response;
 	}
 }
