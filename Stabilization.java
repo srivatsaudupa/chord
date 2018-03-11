@@ -3,8 +3,7 @@ import java.net.InetSocketAddress;
 /**
  * Stabilization thread that periodically asks successor for its predecessor
  * and determine if current node should update or delete its successor.
- * @author Chuan Xia
- *
+ * @author Srivatsa Udupa
  */
 
 public class Stabilization extends Thread {
