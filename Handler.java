@@ -222,7 +222,7 @@ public class Handler {
 	{
 		InetSocketAddress nodeAddr = Handler.requestAddress(localAddress, "FINDSUCC_"+hashValue);
 		String response = CommunicationHandler.sendRequest(nodeAddr, "CHECKFILE_"+hashValue);
-		if(response == "EXISTS")
+		if(response.equals("EXISTS"))
 			return nodeAddr;
 		return null;
 	}
