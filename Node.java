@@ -524,7 +524,7 @@ public class Node {
 	 *      returns nothing.
 	 */
 	public void terminateNodeInstance() {
-		System.out.println(nextNode.toString());
+		System.out.println(this.getSuccessor());
 		this.handFilesOver(nextNode);
 		if (listener != null)
 			listener.toDie();
