@@ -572,7 +572,7 @@ public class Node {
 		String request = "REQFILE_"+localHash;
 		String response = CommunicationHandler.sendRequest(nextNode, request);
 		String[] splitResponse = response.split("_");
-		if(splitResponse[1] == "NOFILE")
+		if(splitResponse[1].equals("NOFILE"))
 			return;
 		for(int i=1; i<splitResponse.length;i++)
 		{
@@ -626,7 +626,7 @@ public class Node {
 		}
 		if(response.equals("RETFILE"))
 		{
-			return response + "_NOFILES";
+			return response + "_NOFILE";
 		}
 		else if(!removeList.isEmpty()) {
 			for(Long element:removeList)
