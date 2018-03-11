@@ -8,7 +8,7 @@
  */
 
 import java.net.InetSocketAddress;
-import java.util.HashMap;
+import java.util.*;
 import java.io.File;
 
 public class Node {
@@ -598,6 +598,7 @@ public class Node {
 	{
 		String filename = null;
 		String response = "RETFILE";
+		ArrayList<Long> removeList = new ArrayList<Long>();
 		for(long fileId: this.filesTable.keySet())
 		{
 			if(fileId <= id)
@@ -609,7 +610,8 @@ public class Node {
 					if(sendFile.exists())
 					{
 						response += "_"+filename;
-						//this.filesTable.remove(fileId);
+						removeList.add(fileId);
+						sendFile.delete();
 					}	
 
 				}
@@ -622,6 +624,15 @@ public class Node {
 		if(response.equals("RETFILE"))
 		{
 			return response + "_NOFILES";
+		}
+		else if(!removeList.isEmpty()) {
+			for(Long element:removeList)
+			{
+				this.filesTable.remove(element);
+			}
+		}
+		{
+
 		}
 		return response;
 	}
