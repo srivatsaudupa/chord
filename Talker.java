@@ -86,6 +86,10 @@ public class Talker implements Runnable{
 			int port = result.getPort();
 			ret = "FOUNDSUCC_"+ip+":"+port;
 		}
+		else if (request.startsWith("REQFILE")) {
+			long id = Long.parseLong(request.split("_")[1]);
+			return local.fetchFiles(id);			
+		}
 		else if (request.startsWith("IAMPRE")) {
 			InetSocketAddress new_pre = Handler.buildSocketAddress(request.split("_")[1]);
 			local.notified(new_pre);

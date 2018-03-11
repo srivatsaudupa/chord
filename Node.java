@@ -9,6 +9,7 @@
 
 import java.net.InetSocketAddress;
 import java.util.HashMap;
+import java.io.File;
 
 public class Node {
 
@@ -16,6 +17,7 @@ public class Node {
 	private InetSocketAddress localAddress;
 	private InetSocketAddress predecessor;
 	private HashMap<Integer, InetSocketAddress> fingerTable;
+	private HashMap<Long, String> filesTable;
 	private InetSocketAddress nextNode;
 	private Listener listener;
 	private Stabilization stabilization;
@@ -48,6 +50,7 @@ public class Node {
 		stabilization = new Stabilization(this);
 		fixFt = new FingerTable(this);
 		heartBeatMonitor = new HeartBeat(this);
+		nodeFileSystemUpdate();
 	}
 
 	/**
@@ -77,6 +80,10 @@ public class Node {
 		stabilization.start();
 		fixFt.start();
 		heartBeatMonitor.start();
+		if(contact != null || !contact.equals(localAddress))
+		{
+			fileExchange();
+		}
 
 		return true;
 	}
@@ -493,7 +500,7 @@ public class Node {
 	public void displayFingerTable() {
 		System.out.println("\n********************* Finger Table ***********************************************");
 		System.out.println("#\tNode Address (IP Address:Port)\tNodeID");
-		System.out.println("\n********************* Finger Table ***********************************************");
+		System.out.println("\n**********************************************************************************");
 		for (int i = 1; i <= 32; i++) {
 			long ithstart = Handler.ithStart(Handler.hashSocketAddress(localAddress),i);
 			InetSocketAddress fingerTableEntry = fingerTable.get(i);
@@ -525,5 +532,97 @@ public class Node {
 			stabilization.toDie();
 		if (heartBeatMonitor != null)
 			heartBeatMonitor.toDie();
+	}
+
+	/* ******************************** Node File System ************************************** */
+	private void nodeFileSystemUpdate()
+	{	
+		try{
+			File fileFolder = new File("Files");
+			File[] filesList = fileFolder.listFiles();
+			String filename = null;
+			filesTable = new HashMap<Long, String>();
+			for(int i=0;i<filesList.length;i++)
+			{
+				filename = filesList[i].getName();
+				filesTable.put(Handler.hashString(filename), filename);
+			}
+		}
+		catch(Exception e)
+		{
+			System.out.println("Files System error. Mount file folder is invalid");
+			System.exit(0);	
+		}
+	}
+	public boolean nodeHasFile(long filehash)
+	{
+		if(this.filesTable.containsKey(filehash))
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public void fileExchange()
+	{
+		InetSocketAddress nextNode = this.find_nextNode(localHash);
+		String request = "REQFILE_"+localHash;
+		String response = CommunicationHandler.sendRequest(nextNode, request);
+		String[] splitResponse = response.split("_");
+		if(splitResponse[1] == "NOFILE")
+			return;
+		for(int i=1; i<splitResponse.length;i++)
+		{
+			this.updateFileSystem(splitResponse[i]);
+		}
+	}
+
+	public void updateFileSystem(String response)
+	{
+		long fileHash;
+		try
+		{
+			File newFile = new File("Files/"+response);
+			boolean nFile = newFile.createNewFile();
+			fileHash = Handler.hashString(response);
+			this.filesTable.put(fileHash, response);
+		}
+		catch(Exception e)
+		{
+			System.out.println("Cannot open file");
+		}
+
+	}
+
+	public String fetchFiles(long id)
+	{
+		String filename = null;
+		String response = "RETFILE";
+		for(long fileId: this.filesTable.keySet())
+		{
+			if(fileId <= id)
+			{
+				filename = this.filesTable.get(fileId);
+				try
+				{
+					File sendFile = new File("Files/"+filename);
+					if(sendFile.exists())
+					{
+						response += "_"+filename;
+						//this.filesTable.remove(fileId);
+					}	
+
+				}
+				catch(Exception e)
+				{
+					System.out.println("No File Found");
+				}
+			}
+		}
+		if(response.equals("RETFILE"))
+		{
+			return response + "_NOFILES";
+		}
+		return response;
 	}
 }
