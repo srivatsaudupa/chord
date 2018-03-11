@@ -32,7 +32,7 @@ public class HeartBeat extends Thread {
 		}
 	}
 	
-	public void toDie() {
+	public void kill() {
 		heartBeatStatus = false;
 	}
 }

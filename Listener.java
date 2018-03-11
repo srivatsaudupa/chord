@@ -16,11 +16,11 @@ public class Listener extends Thread {
 
 	private Node local;
 	private ServerSocket serverSocket;
-	private boolean alive;
+	private boolean status;
 
 	public Listener (Node n) {
 		local = n;
-		alive = true;
+		status = true;
 		InetSocketAddress localAddress = local.getAddress();
 		int port = localAddress.getPort();
 
@@ -34,7 +34,7 @@ public class Listener extends Thread {
 
 	@Override
 	public void run() {
-		while (alive) {
+		while (status) {
 			Socket talkSocket = null;
 			try {
 				talkSocket = serverSocket.accept();
@@ -48,7 +48,7 @@ public class Listener extends Thread {
 		}
 	}
 
-	public void toDie() {
-		alive = false;
+	public void kill() {
+		status = false;
 	}
 }

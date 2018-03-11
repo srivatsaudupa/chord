@@ -78,7 +78,7 @@ public class Search{
 			// Enter the key to be searched
 			Scanner searchKey = new Scanner(System.in);
 			while(true) {
-				System.out.print("\nSearch Engine\n-------------------------\n(Type a filename / keyword or 'Exit' to quit the search engine): ");
+				System.out.print("\nSearch Engine\n-------------------------\n(Type a filename or 'Exit' to quit the search engine): ");
 				String command = null;
 				command = searchKey.nextLine();
 				
@@ -88,18 +88,17 @@ public class Search{
 				
 				else if (command.length() > 0){
 					long hash = Handler.hashString(command);
-					System.out.println("\nSearch Key Hash Value: "+hash);
-					InetSocketAddress result = Handler.requestAddress(localAddress, "FINDSUCC_"+hash);
-					
-					// if local node is disconnected - exit
-					if (result == null) {
-						System.out.println("Connection to the node Terminated. The search engine is exiting now");
-						System.exit(0);
-					}					
+					System.out.println("\nSearch Key Hash Value: "+hash);					
 					// print out response from the node
 					System.out.println("Locating file...");
-					System.out.println("The file has been located in the following system");
-					System.out.println("\tNode IP: "+result.getAddress()+"\n\tNode Port: "+result.getPort()+"\n\tNode Hash ID: "+Handler.hashSocketAddress(result));
+					InetSocketAddress nodeAddr = Handler.fileSearch(localAddress, hash);
+					if(nodeAddr == null)
+						System.out.println("The file does not exist in the system");
+					else
+					{
+						System.out.println("The file has been located in the following node");
+						System.out.println("\tNode IP: "+nodeAddr.getAddress()+"\n\tNode Port: "+nodeAddr.getPort()+"\n\tNode Hash ID: "+Handler.hashSocketAddress(nodeAddr));
+					}	
 				}
 			}
 		}

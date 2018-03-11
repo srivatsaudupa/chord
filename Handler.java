@@ -218,4 +218,13 @@ public class Handler {
 
 	}
 
+	public static InetSocketAddress fileSearch(InetSocketAddress localAddress, long hashValue)
+	{
+		InetSocketAddress nodeAddr = Handler.requestAddress(localAddress, "FINDSUCC_"+hashValue);
+		String response = CommunicationHandler.sendRequest(nodeAddr, "CHECKFILE_"+hashValue);
+		if(response == "EXISTS")
+			return nodeAddr;
+		return null;
+	}
+
 }

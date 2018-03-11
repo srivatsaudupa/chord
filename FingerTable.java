@@ -32,7 +32,7 @@ public class FingerTable extends Thread{
 		}
 	}
 
-	public void toDie() {
+	public void kill() {
 		alive = false;
 	}
 

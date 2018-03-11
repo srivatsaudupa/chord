@@ -99,6 +99,14 @@ public class Talker implements Runnable{
 			}
 			return "OK";
 		}
+		else if (request.startsWith("CHECKFILE")) {
+			String[] reqString = request.split("_");
+			long hashValue = Long.parseLong(reqString[1]) ;
+			
+			if(local.nodeHasFile(hashValue))
+				return "EXISTS";
+			return "NOFILE";
+		}
 		else if (request.startsWith("IAMPRE")) {
 			InetSocketAddress new_pre = Handler.buildSocketAddress(request.split("_")[1]);
 			local.notified(new_pre);

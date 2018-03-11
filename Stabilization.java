@@ -4,6 +4,8 @@ import java.net.InetSocketAddress;
  * Stabilization thread that periodically asks successor for its predecessor
  * and determine if current node should update or delete its successor.
  * @author Srivatsa Udupa
+ * @author Anusha Naik
+ * @author Prarthana Raghavan
  */
 
 public class Stabilization extends Thread {
@@ -59,7 +61,7 @@ public class Stabilization extends Thread {
 
 	}
 
-	public void toDie() {
+	public void kill() {
 		alive = false;
 	}
 
