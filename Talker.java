@@ -90,6 +90,15 @@ public class Talker implements Runnable{
 			long id = Long.parseLong(request.split("_")[1]);
 			return local.fetchFiles(id);			
 		}
+		else if (request.startsWith("FILETX")) {
+			String[] reqString = request.split("_");
+			long hashValue;
+			for(int i=1; i<reqString.length;i++)
+			{
+				local.updateFileTable(reqString[i]);
+			}
+			return "OK";
+		}
 		else if (request.startsWith("IAMPRE")) {
 			InetSocketAddress new_pre = Handler.buildSocketAddress(request.split("_")[1]);
 			local.notified(new_pre);

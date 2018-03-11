@@ -524,6 +524,7 @@ public class Node {
 	 *      returns nothing.
 	 */
 	public void terminateNodeInstance() {
+		this.handFilesOver(nextNode);
 		if (listener != null)
 			listener.toDie();
 		if (fixFt != null)
@@ -632,5 +633,35 @@ public class Node {
 			}
 		}
 		return response;
+	}
+
+	public boolean handFilesOver(InetSocketAddress nextNode)
+	{
+		String request = "FILETX";
+		for(long fileId: this.filesTable.keySet())
+		{
+			request += "_"+this.filesTable.get(fileId);
+		}
+		String response = CommunicationHandler.sendRequest(nextNode, request);
+		if(response == "OK")
+			return true;
+		return false;
+	}
+	public boolean updateFileTable(String filename)
+	{
+		try
+		{
+			File movFile = new File("Files/"+filename);
+			long fileHash = Handler.hashString(filename);
+			this.filesTable.put(fileHash, filename);
+			if(movFile.createNewFile())
+				return true;
+			return false;
+		}
+		catch(Exception e)
+		{
+			System.out.println("No File Found");
+			return false;
+		}
 	}
 }
