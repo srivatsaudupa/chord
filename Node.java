@@ -525,7 +525,6 @@ public class Node {
 	 */
 	public void terminateNodeInstance() {
 		InetSocketAddress nextNode = this.getSuccessor();
-		System.out.println(nextNode);
 		this.handFilesOver(nextNode);
 		if (listener != null)
 			listener.kill();
@@ -648,7 +647,7 @@ public class Node {
 		}
 		String response = CommunicationHandler.sendRequest(nextNode, request);
 
-		if(response == "OK")
+		if(response.equals("OK"))
 		{
 			if(!removeList.isEmpty()){
 				for(long hashId:removeList)
