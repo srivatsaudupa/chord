@@ -91,14 +91,22 @@ public class Search{
 					System.out.println("\nSearch Key Hash Value: "+hash);					
 					// print out response from the node
 					System.out.println("Locating file...");
-					InetSocketAddress nodeAddr = Handler.fileSearch(localAddress, hash);
-					if(nodeAddr == null)
-						System.out.println("The file does not exist in the system");
-					else
+					try
 					{
-						System.out.println("The file has been located in the following node");
-						System.out.println("\tNode IP: "+nodeAddr.getAddress()+"\n\tNode Port: "+nodeAddr.getPort()+"\n\tNode Hash ID: "+Handler.hashSocketAddress(nodeAddr));
-					}	
+						InetSocketAddress nodeAddr = Handler.fileSearch(localAddress, hash);
+						if(nodeAddr == null)
+							System.out.println("The file does not exist in the system");
+						else
+						{
+							System.out.println("The file has been located in the following node");
+							System.out.println("\tNode IP: "+nodeAddr.getAddress()+"\n\tNode Port: "+nodeAddr.getPort()+"\n\tNode Hash ID: "+Handler.hashSocketAddress(nodeAddr));
+						}	
+					}
+					catch(Exception e)
+					{
+						System.out.println("The Search Engine node has disconnected");
+						System.exit(0);
+					}
 				}
 			}
 		}
