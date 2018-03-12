@@ -102,7 +102,6 @@ public class Talker implements Runnable{
 		else if (request.startsWith("CHECKFILE")) {
 			String[] reqString = request.split("_");
 			long hashValue = Long.parseLong(reqString[1]) ;
-			System.out.println(local.getAddress().toString());
 			if(local.nodeHasFile(hashValue))
 				return "EXISTS";
 			return "NOFILE";
