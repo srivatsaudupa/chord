@@ -80,7 +80,7 @@ public class Node {
 		stabilization.start();
 		fixFt.start();
 		heartBeatMonitor.start();
-		if(contact != null || !contact.equals(localAddress))
+		if(contact != null && !contact.equals(localAddress))
 		{
 			fileExchange();
 		}
@@ -602,9 +602,10 @@ public class Node {
 		String filename = null;
 		String response = "RETFILE";
 		ArrayList<Long> removeList = new ArrayList<Long>();
+		long currentNodeId = this.getId();
 		for(long fileId: this.filesTable.keySet())
 		{
-			if(fileId <= id)
+			if(fileId <= id && fileId > currentNodeId)
 			{
 				filename = this.filesTable.get(fileId);
 				try
