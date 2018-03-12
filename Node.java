@@ -640,13 +640,32 @@ public class Node {
 	public boolean handFilesOver(InetSocketAddress nextNode)
 	{
 		String request = "FILETX";
+		ArrayList<Long> removeList = new ArrayList<Long>();
 		for(long fileId: this.filesTable.keySet())
 		{
 			request += "_"+this.filesTable.get(fileId);
+			removeList.add(fileId);
 		}
 		String response = CommunicationHandler.sendRequest(nextNode, request);
+
 		if(response == "OK")
+		{
+			if(!removeList.isEmpty()){
+				for(long hashId:removeList)
+				{
+					File delFile = new File("Files/"+this.filesTable.get(hashId));
+					try{
+						delFile.delete();
+						this.filesTable.remove(hashId);
+					}	
+					catch(Exception e)
+					{
+						System.out.println("No File Found");
+					}
+				}
+			}
 			return true;
+		}
 		return false;
 	}
 	public boolean updateFileTable(String filename)
