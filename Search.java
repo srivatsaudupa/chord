@@ -82,7 +82,7 @@ public class Search{
 				String command = null;
 				command = searchKey.nextLine();
 				
-				if (command.startsWith("Exit")) {
+				if (command.startsWith("Exit") || command.startsWith("exit")) {
 					System.exit(0);				
 				}
 				
