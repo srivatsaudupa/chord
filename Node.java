@@ -603,9 +603,10 @@ public class Node {
 		String response = "RETFILE";
 		ArrayList<Long> removeList = new ArrayList<Long>();
 		long currentNodeId = this.getId();
+
 		for(long fileId: this.filesTable.keySet())
 		{
-			if(fileId <= id && fileId > currentNodeId)
+			if(fileId <= id && (fileId > currentNodeId || currentNodeId > id))
 			{
 				filename = this.filesTable.get(fileId);
 				try
