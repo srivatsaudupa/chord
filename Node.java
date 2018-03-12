@@ -525,7 +525,8 @@ public class Node {
 	 */
 	public void terminateNodeInstance() {
 		InetSocketAddress nextNode = this.getSuccessor();
-		this.handFilesOver(nextNode);
+		if(nextNode != null)
+			this.handFilesOver(nextNode);
 		if (listener != null)
 			listener.kill();
 		if (fixFt != null)
