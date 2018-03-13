@@ -1,15 +1,5 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.UnknownHostException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
+import java.io.*;
+import java.net.*;
 
 /**
  * Communication Handler class that does the following things:
@@ -26,8 +16,10 @@ public class CommunicationHandler {
 	/* *********************************************************************************************** */
 	/* 1. Request Send */
 	public static String sendRequest(InetSocketAddress server, String request) {
+		/* Validate Request */
 		if (server == null || request == null)
 			return null;
+		/* Create send socket and write to the output stream */
 		Socket senderSocket = null;
 		try 
 		{
@@ -54,9 +46,11 @@ public class CommunicationHandler {
 		} 
 		catch (IOException e) 
 		{
-			System.out.println("Cannot get input stream from "+server.toString()+"\nFor the request is: "+request+"\n");
+			System.out.println("Input Stream Error: \nServer: "+server.toString()+"\nRequest: "+request);
 		}
-		String response = inputStreamToString(inMessageStream);
+		
+		/* Read response packets and parse */
+		String response = parseIOStream(inMessageStream);
 		try 
 		{
 			senderSocket.close();
@@ -69,15 +63,15 @@ public class CommunicationHandler {
 	}
 
 	/* Read input stream and parse it into a string */
-	public static String inputStreamToString(InputStream inMessageStream) {
+	public static String parseIOStream(InputStream inMessageStream) {
 		if (inMessageStream == null) {
 			return null;
 		}
-		BufferedReader reader = new BufferedReader(new InputStreamReader(inMessageStream));
+		BufferedReader msgReader = new BufferedReader(new InputStreamReader(inMessageStream));
 		String readline = null;
 		try 
 		{
-			readline = reader.readLine();
+			readline = msgReader.readLine();
 		} 
 		catch (IOException e) 
 		{

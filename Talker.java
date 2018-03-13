@@ -30,7 +30,7 @@ public class Talker implements Runnable{
 		OutputStream output = null;
 		try {
 			input = talkSocket.getInputStream();
-			String request = CommunicationHandler.inputStreamToString(input);
+			String request = CommunicationHandler.parseIOStream(input);
 			String response = processRequest(request);
 			if (response != null) {
 				output = talkSocket.getOutputStream();

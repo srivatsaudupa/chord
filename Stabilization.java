@@ -1,4 +1,4 @@
-import java.net.InetSocketAddress;
+import java.net.*;
 
 /**
  * Stabilization thread that periodically asks successor for its predecessor
@@ -10,45 +10,45 @@ import java.net.InetSocketAddress;
 
 public class Stabilization extends Thread {
 	
-	private Node local;
-	private boolean alive;
+	private Node currentNode;
+	private boolean status;
 
-	public Stabilization(Node _local) {
-		local = _local;
-		alive = true;
+	public Stabilization(Node currentNode) {
+		this.currentNode = currentNode;
+		this.status = true;
 	}
 
 	@Override
 	public void run() {
-		while (alive) {
-			InetSocketAddress successor = local.getSuccessor();
-			if (successor == null || successor.equals(local.getAddress())) {
-				local.updateFingers(-3, null); //fill
+		while (status) {
+			InetSocketAddress succNode = currentNode.getSuccessor();
+			if (succNode == null || succNode.equals(currentNode.getAddress())) {
+				currentNode.updateFingers(-3, null); //fill
 			}
-			successor = local.getSuccessor();
-			if (successor != null && !successor.equals(local.getAddress())) {
+			succNode = currentNode.getSuccessor();
+			if (succNode != null && !succNode.equals(currentNode.getAddress())) {
 
 				// try to get my successor's predecessor
-				InetSocketAddress x = Handler.requestAddress(successor, "YOURPRE");
+				InetSocketAddress preSuccNode = Handler.requestAddress(succNode, "RQEPR");
 
 				// if bad connection with successor! delete successor
-				if (x == null) {
-					local.updateFingers(-1, null);
+				if (preSuccNode == null) {
+					currentNode.updateFingers(-1, null);
 				}
 
 				// else if successor's predecessor is not itself
-				else if (!x.equals(successor)) {
-					long local_id = Handler.hashSocketAddress(local.getAddress());
-					long successor_relative_id = Handler.computeRelativeId(Handler.hashSocketAddress(successor), local_id);
-					long x_relative_id = Handler.computeRelativeId(Handler.hashSocketAddress(x),local_id);
-					if (x_relative_id>0 && x_relative_id < successor_relative_id) {
-						local.updateFingers(1,x);
+				else if (!preSuccNode.equals(succNode)) {
+					long currentNodeId = Handler.hashSocketAddress(currentNode.getAddress());
+					long succRelativeId = Handler.computeRelativeId(Handler.hashSocketAddress(succNode), currentNodeId);
+					long preSuccRelativeId = Handler.computeRelativeId(Handler.hashSocketAddress(preSuccNode),currentNodeId);
+					if (preSuccRelativeId>0 && preSuccRelativeId < succRelativeId) {
+						currentNode.updateFingers(1,preSuccNode);
 					}
 				}
 				
 				// successor's predecessor is successor itself, then notify successor
 				else {
-					local.notify(successor);
+					currentNode.notify(succNode);
 				}
 			}
 
@@ -62,7 +62,7 @@ public class Stabilization extends Thread {
 	}
 
 	public void kill() {
-		alive = false;
+		status = false;
 	}
 
 

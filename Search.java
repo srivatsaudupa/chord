@@ -1,5 +1,5 @@
-import java.net.InetSocketAddress;
-import java.util.Scanner;
+import java.net.*;
+import java.util.*;
 
 /**
  * Query class that offers the interface by which users can do 
@@ -12,7 +12,7 @@ import java.util.Scanner;
 
 public class Search{
 
-	private static InetSocketAddress localAddress;
+	private static InetSocketAddress currentAddress;
 	private static Handler handler;
 
 	public static void main (String[] args) {
@@ -20,54 +20,50 @@ public class Search{
 		// check for the number of arguments
 		if (args.length == 2) {
 			// extract the socket address
-			localAddress = Handler.buildSocketAddress(args[0]+":"+args[1]);
-			if (localAddress == null) {
+			currentAddress = Handler.buildSocketAddress(args[0]+":"+args[1]);
+			if (currentAddress == null) {
 				System.out.println("Error: Connection could not be established");
 				System.exit(0);
 			}
 			// send request for the local IP
-			String response = CommunicationHandler.sendRequest(localAddress, "KEEP");
+			String response = CommunicationHandler.sendRequest(currentAddress, "RQALV");
 
 			// In the absence of response - exit
-			if (response == null || !response.equals("ALIVE"))  {
+			if (response == null || !response.equals("RPALV"))  {
 				System.out.println("\nNode Connection Failed:\nCould not establish connection to the node\n");
 				System.exit(0);
 			}
 
 			// Otherwise, print the connection info
 			System.out.println("**************************** Node Connection Successful **********************************");
-			System.out.println("\tNode IP: "+localAddress.getAddress().toString()+"\n\tNode Port: "+localAddress.getPort()+"\n\tNode ID: "+handler.hashSocketAddress(localAddress));
+			System.out.println("\tNode IP: "+currentAddress.getAddress().toString()+"\n\tNode Port: "+currentAddress.getPort()+"\n\tNode ID: "+handler.hashSocketAddress(currentAddress));
 			System.out.println("******************************************************************************************");
-			boolean pred = false;
-			boolean succ = false;
-			InetSocketAddress pred_addr = Handler.requestAddress(localAddress, "YOURPRE");			
-			InetSocketAddress succ_addr = Handler.requestAddress(localAddress, "YOURSUCC");
-			if (pred_addr == null || succ_addr == null) {
+			boolean predStatus = false;
+			boolean succStatus = false;
+			InetSocketAddress predNodeAddr = Handler.requestAddress(currentAddress, "RPEPR");			
+			InetSocketAddress succNodeAddr = Handler.requestAddress(currentAddress, "RQCSC");
+			if (predNodeAddr == null || succNodeAddr == null) {
 				System.out.println("Error: Could not connect to the node.");
 				System.exit(0);	
 			}
-			if (pred_addr.equals(localAddress))
-				pred = true;
-			if (succ_addr.equals(localAddress))
-				succ = true;
+			if (predNodeAddr.equals(currentAddress))
+				predStatus = true;
+			if (succNodeAddr.equals(currentAddress))
+				succStatus = true;
 
 			// Validity - if both predecessor and successor or both are unavailable
-			while (pred^succ) {
+			while (predStatus^succStatus) {
 				System.out.println("System is stabilizing...");
-				pred_addr = Handler.requestAddress(localAddress, "YOURPRE");			
-				succ_addr = Handler.requestAddress(localAddress, "YOURSUCC");
-				if (pred_addr == null || succ_addr == null) {
+				predNodeAddr = Handler.requestAddress(currentAddress, "RPEPR");			
+				succNodeAddr = Handler.requestAddress(currentAddress, "RQCSC");
+				if (predNodeAddr == null || succNodeAddr == null) {
 					System.out.println("Error: Could not connect to the node");
 					System.exit(0);	
 				}
-				if (pred_addr.equals(localAddress))
-					pred = true;
-				else 
-					pred = false;
-				if (succ_addr.equals(localAddress))
-					succ = true;
-				else 
-					succ = false;
+				
+				predStatus = predNodeAddr.equals(currentAddress)?true:false;
+				succStatus = succNodeAddr.equals(currentAddress)?true:false;
+				
 				try {
 					Thread.sleep(500);
 				} catch (InterruptedException e) {
@@ -79,21 +75,21 @@ public class Search{
 			Scanner searchKey = new Scanner(System.in);
 			while(true) {
 				System.out.print("\nSearch Engine\n-------------------------\n(Type a filename or 'Exit' to quit the search engine): ");
-				String command = null;
-				command = searchKey.nextLine();
-				
-				if (command.startsWith("Exit") || command.startsWith("exit")) {
+				String command = searchKey.nextLine();
+	
+				if (command.toLowerCase().startsWith("exit")) 
+				{
 					System.exit(0);				
 				}
-				
-				else if (command.length() > 0){
-					long hash = Handler.hashString(command);
-					System.out.println("\nSearch Key Hash Value: "+hash);					
+				else if (command.length() > 0)
+				{
+					long hashId = Handler.hashString(command);
+					System.out.println("\nSearch Key Hash Value: "+hashId);					
 					// print out response from the node
 					System.out.println("Locating file...");
 					try
 					{
-						InetSocketAddress nodeAddr = Handler.fileSearch(localAddress, hash);
+						InetSocketAddress nodeAddr = Handler.fileSearch(currentAddress, hashId);
 						if(nodeAddr == null)
 							System.out.println("The file does not exist in the system");
 						else
