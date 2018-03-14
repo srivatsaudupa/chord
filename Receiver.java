@@ -13,11 +13,14 @@ import java.net.*;
 public class Receiver implements Runnable{
 	Socket receiverSocket;
 	private Node currentNode;
+	// Constructor
 	public Receiver(Socket receiverSocket, Node currentNode)
 	{
 		this.receiverSocket = receiverSocket;
 		this.currentNode = currentNode;
 	}
+
+	//Thread runnable
 	public void run()
 	{
 		InputStream iStream = null;
@@ -40,6 +43,10 @@ public class Receiver implements Runnable{
 		}
 	}
 
+	/* Method to handle requests 
+		Args: String request
+		Return: String response 
+	*/
 	private String handleRequest(String request)
 	{
 		InetSocketAddress resNodeAddr = null;
@@ -52,9 +59,19 @@ public class Receiver implements Runnable{
 		}
 		String[] reqString = request.split("_");
 		String rqCode = reqString[0];
+		/*
+			Message format - Message is separated by _, and the first string will denote the request / response code
+			Eg. RQFILE_hashId - RQFILE code denotes a request for file transfer by a new node from its successor
+				Response: RETFILE_file1_file2_file3 or RETFILE_NOFILE
+				In each of the following cases, the Request and response codes are described
+		*/
 		switch(rqCode)
 		{
-			// CLOSEST
+			/* RQIM_hashId
+				- Request for the immediate preceding finger table entry and return the nodeIp and address
+				- Response Message: 
+					- RPIM_nodeIP:nodePort
+			*/
 			case "RQIM":
 						hashId = Long.parseLong(request.split("_")[1]);
 						resNodeAddr = currentNode.closestFingerEntry(hashId);
@@ -62,7 +79,11 @@ public class Receiver implements Runnable{
 						nodePort = resNodeAddr.getPort();
 						retMsg = "RPIM_"+nodeIP+":"+nodePort;
 						break;
-			//YOURSUCC
+			/* RQCSC
+				- Request a node for the IP and Port number of its successor node
+				- Response Message
+					- RPCSC_nodeIP:nodePort
+			*/
 			case "RQCSC":
 						resNodeAddr =currentNode.getSuccessor();
 						if (resNodeAddr != null) 
@@ -76,7 +97,11 @@ public class Receiver implements Runnable{
 							retMsg = "NRP";
 						}
 						break;
-			// YOURPRE
+			/* RQEPR
+				- Request a node for the IP and Port number of its predecessor node
+				- Response Message
+					- RPEPR_nodeIP:nodePort
+			*/
 			case "RQEPR":
 						resNodeAddr =currentNode.getPredecessor();
 						if (resNodeAddr != null) 
@@ -90,7 +115,11 @@ public class Receiver implements Runnable{
 							retMsg = "NRP";
 						}
 						break;
-			// FINDSUCC
+			/* RQFSC_hashId
+				- Find successor of a node using its hash ID
+				- Response Message
+					- RPFSC_nodeIP:nodePort
+			*/
 			case "RQFSC":
 						hashId = Long.parseLong(request.split("_")[1]);
 						resNodeAddr = currentNode.find_nextNode(hashId);
@@ -98,12 +127,20 @@ public class Receiver implements Runnable{
 						nodePort = resNodeAddr.getPort();
 						retMsg = "RPFSC_"+nodeIP+":"+nodePort;
 						break;  
-			// REQFILE
+			/* RQFILE_hashId
+				- Request files with hashId <= requested hashId
+				- Response Message
+					- RETFILE_filename1_filename2..._filenameN
+			*/
 			case "RQFILE":
 						hashId = Long.parseLong(request.split("_")[1]);
 						retMsg = currentNode.fetchFiles(hashId);
 						break;
-			// FILETX
+			/* RQFTX_filename1_filename2_.._filenameN
+				- Request for transfer of files from a departing node to its successor
+				- Response Message
+					- RPFTXCMP
+			*/
 			case "RQFTX":
 						for(int i=1; i<reqString.length;i++)
 						{
@@ -111,7 +148,12 @@ public class Receiver implements Runnable{
 						}
 						retMsg = "RPFTXCMP";
 						break;
-			// CHECKFILE
+			/* RQCHF_hashId
+				- Request a node if a file with hashId exists in it
+				- Response Message
+					- RPEXISTS - if file exists in the current node
+					- RONFL - if no such file exists in the current node
+			*/
 			case "RQCHF":
 						hashId = Long.parseLong(reqString[1]) ;
 						if(currentNode.nodeHasFile(hashId))
@@ -119,12 +161,21 @@ public class Receiver implements Runnable{
 						else
 							retMsg = "RPNFL";
 				break;
-			// IAMPRE
+			/* RQPNGPRE_InetSocketAddress
+				- Ping a node to notify that the pinging node is now its predecessor
+				- Response Message
+					- RPPNGD
+			*/
 			case "RQPNGPRE":
 						InetSocketAddress updPredecessor = Handler.buildSocketAddress(request.split("_")[1]);
 						currentNode.notified(updPredecessor);
 						retMsg = "RPPNGD";
 						break;
+			/* RQALV
+				- Request the status of a node (Heart Beat Monitoring)
+				- Response Message
+					- RPALV
+			*/
 			case "RQALV":
 						retMsg = "RPALV";
 				break;
