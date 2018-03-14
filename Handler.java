@@ -89,7 +89,6 @@ public class Handler {
 		try {
 			md = MessageDigest.getInstance("SHA-1");
 		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -189,35 +188,39 @@ public class Handler {
 		if (addr == null) {
 			return null;
 		}
-
-		
-		String[] splitted = addr.split(":");
-		if (splitted.length >= 2) {
-			String ip = splitted[0];
+		String[] addrSplit = addr.split(":");
+		if (addrSplit.length >= 2) {
+			String ip = addrSplit[0];
 			if (ip.startsWith("/")) {
 				ip = ip.substring(1);
 			}
 			InetAddress m_ip = null;
-			try {
+			try 
+			{
 				m_ip = InetAddress.getByName(ip);
-			} catch (UnknownHostException e) {
+			} 
+			catch (UnknownHostException e) 
+			{
 				System.out.println("Cannot create ip address: "+ip);
 				return null;
 			}
-
-
-			String port = splitted[1];
+			String port = addrSplit[1];
 			int m_port = Integer.parseInt(port);
-
 			return new InetSocketAddress(m_ip, m_port);
 		}
-
-		else {
+		else 
+		{
 			return null;
 		}
-
 	}
-
+	/**
+	 * File look up and search 
+	 * Args:
+	 *       addr: current node localaddress and file hash Id 
+	 * 
+	 * Returns:
+	 *       returns InetNodeAddress of the file location or null
+	 */
 	public static InetSocketAddress fileSearch(InetSocketAddress localAddress, long hashValue)
 	{
 		InetSocketAddress nodeAddr = Handler.requestAddress(localAddress, "RQFSC_"+hashValue);
