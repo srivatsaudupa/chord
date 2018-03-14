@@ -2,28 +2,33 @@ import java.net.InetSocketAddress;
 import java.util.Random;
 
 /**
- * FingerTable access a random entry in finger table periodically and 
+ * Maintains a thread for Finger Table checks
+ * Access a random entry in finger table periodically and 
  * and fix it.
+ * @author Anusha Naik
+ * @author Srivatsa Udupa
+ * @author Prarthana Raghavan
  */
+
 
 public class FingerTable extends Thread{
 
-	private Node local;
+	private Node currentNode;
 	Random random;
-	boolean alive;
+	boolean status;
 
 	public FingerTable (Node node) {
-		local = node;
-		alive = true;
+		currentNode = node;
+		status = true;
 		random = new Random();
 	}
 
 	@Override
 	public void run() {
-		while (alive) {
+		while (status) {
 			int i = random.nextInt(31) + 2;
-			InetSocketAddress ithfinger = local.find_nextNode(Handler.ithStart(local.getId(), i));
-			local.updateFingers(i, ithfinger);
+			InetSocketAddress ithfinger = currentNode.find_nextNode(Handler.ithStart(currentNode.getId(), i));
+			currentNode.updateFingers(i, ithfinger);
 			try {
 				Thread.sleep(500);
 			} catch (InterruptedException e) {
@@ -31,9 +36,10 @@ public class FingerTable extends Thread{
 			}
 		}
 	}
-
+	
+	// Terminate process
 	public void kill() {
-		alive = false;
+		status = false;
 	}
 
 }
