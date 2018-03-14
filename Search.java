@@ -4,9 +4,9 @@ import java.util.*;
 /**
  * Query class that offers the interface by which users can do 
  * search by querying a valid chord node.
- * @author Anusha
+ * @author Anusha Naik
  * @author Prarthana Raghavan
- * @author Srivatsa
+ * @author Srivatsa Udupa
  *
  */
 
