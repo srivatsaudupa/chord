@@ -82,7 +82,7 @@ public class Handler {
 		hashbytes[0] = (byte) (i >> 24);
 		hashbytes[1] = (byte) (i >> 16);
 		hashbytes[2] = (byte) (i >> 8);
-		hashbytes[3] = (byte) (i /*>> 0*/);
+		hashbytes[3] = (byte) (i);
 
 		// Initialize message digest to use SHA1
 		MessageDigest md =  null;
@@ -98,16 +98,16 @@ public class Handler {
 			md.update(hashbytes);
 			byte[] result = md.digest();
 
-			byte[] compressed = new byte[4];
+			byte[] truncated = new byte[4];
 			for (int j = 0; j < 4; j++) {
 				byte temp = result[j];
 				for (int k = 1; k < 5; k++) {
 					temp = (byte) (temp ^ result[j+k]);
 				}
-				compressed[j] = temp;
+				truncated[j] = temp;
 			}
-
-			long ret =  (compressed[0] & 0xFF) << 24 | (compressed[1] & 0xFF) << 16 | (compressed[2] & 0xFF) << 8 | (compressed[3] & 0xFF);
+			// Truncate hashed value
+			long ret =  (truncated[0] & 0xFF) << 24 | (truncated[1] & 0xFF) << 16 | (truncated[2] & 0xFF) << 8 | (truncated[3] & 0xFF);
 			ret = ret&(long)0xFFFFFFFFl;
 			return ret;
 		}
