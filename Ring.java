@@ -7,8 +7,8 @@ import java.util.Scanner;
  * Ring class with two options:
  *         1. Create a new chord ring
  *         2. Joining an existing ring
- * @author Anusha
- * @author Srivatsa
+ * @author Anusha Naik
+ * @author Srivatsa Udupa
  * @author Prarthana Raghavan
  *
  */
