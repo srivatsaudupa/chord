@@ -7,34 +7,31 @@
  *
  */
 
-import java.net.InetSocketAddress;
+import java.net.*;
 import java.util.*;
-import java.io.File;
+import java.io.*;
 
 public class Node {
 
-	private long localHash;
-	private InetSocketAddress localAddress;
-	private InetSocketAddress predecessor;
+	private long nodeID;
+	private InetSocketAddress nodeAddress;
+	private InetSocketAddress prevNode;
 	private HashMap<Integer, InetSocketAddress> fingerTable;
 	private HashMap<Long, String> filesTable;
 	private InetSocketAddress nextNode;
-	private Listener listener;
-	private Stabilization stabilization;
-	private FingerTable fixFt;
-	private HeartBeat heartBeatMonitor;
+	private Listener listenerObj;
+	private Stabilization stabilizeObj;
+	private FingerTable fingerTableObj;
+	private HeartBeat heartBeatObj;
 
 	/**
+	 * Constructor
 	 * Args:
 	 *       address: local address of current node
-	 *
-	 * Returns:
-	 *        returns nothing
-	 */
+	 **/
 	public Node (InetSocketAddress address) {
-
-		localAddress = address;
-		localHash = Handler.hashSocketAddress(localAddress);
+		nodeAddress = address;
+		nodeID = Handler.hashSocketAddress(nodeAddress);
 
 		// Create an empty fingerTable for maintaining 32 entries
 		fingerTable = new HashMap<Integer, InetSocketAddress>();
@@ -43,14 +40,42 @@ public class Node {
 		}
 
 		
-		predecessor = null;
+		prevNode = null;
 
 		// Initialize for enabling them to update after every operation
-		listener = new Listener(this);
-		stabilization = new Stabilization(this);
-		fixFt = new FingerTable(this);
-		heartBeatMonitor = new HeartBeat(this);
+		listenerObj = new Listener(this);
+		stabilizeObj = new Stabilization(this);
+		fingerTableObj = new FingerTable(this);
+		heartBeatObj = new HeartBeat(this);
 		nodeFileSystemUpdate();
+	}
+	
+	/**
+	 * Get methods
+	 * Args:
+	 *       No arguments
+	 *
+	 * Returns:
+	 *       The hash value/address/predecessor/nextNodes
+	 */
+
+	public long getId() 
+	{
+		return nodeID;
+	}
+	public InetSocketAddress getAddress() 
+	{
+		return nodeAddress;
+	}
+	public InetSocketAddress getPredecessor() 
+	{
+		return prevNode;
+	}
+	public InetSocketAddress getSuccessor() {
+		if (fingerTable != null && fingerTable.size() > 0) {
+			return fingerTable.get(1);
+		}
+		return null;
 	}
 
 	/**
@@ -62,13 +87,13 @@ public class Node {
 	 *        true: if joined/created successfully
 	 *        false: if not
 	 */
-	public boolean join (InetSocketAddress contact) {
-
+	public boolean joinRing(InetSocketAddress connectorNodeAddr) 
+	{
 		// If the address is null or is equal to current IP address - then it will be creating
-		if (contact != null && !contact.equals(localAddress)) {
-			nextNode = Handler.requestAddress(contact, "FINDSUCC_" + localHash);
+		if (connectorNodeAddr != null && !connectorNodeAddr.equals(nodeAddress)) {
+			nextNode = Handler.requestAddress(connectorNodeAddr, "RQFSC_" + nodeID);
 			if (nextNode == null)  {
-				System.out.println("\nError: Unable to locate the node. Exiting now..\n");
+				System.out.println("\nError: Unable to locate the node.\n");
 				return false;
 			}
 			updateIthFinger(1, nextNode);
@@ -76,11 +101,11 @@ public class Node {
 
 		// As soon as any node creates/joins the network - values to be updated : 
 		// finger table values, predecessor and nextNodes	
-		listener.start();
-		stabilization.start();
-		fixFt.start();
-		heartBeatMonitor.start();
-		if(contact != null && !contact.equals(localAddress))
+		listenerObj.start();
+		stabilizeObj.start();
+		fingerTableObj.start();
+		heartBeatObj.start();
+		if(connectorNodeAddr != null && !connectorNodeAddr.equals(nodeAddress))
 		{
 			fileExchange();
 		}
@@ -97,8 +122,8 @@ public class Node {
 	 *  	response given by the send request/null
 	 */
 	public String notify(InetSocketAddress nextNode) {
-		if (nextNode!=null && !nextNode.equals(localAddress))
-			return CommunicationHandler.sendRequest(nextNode, "IAMPRE_"+localAddress.getAddress().toString()+":"+localAddress.getPort());
+		if (nextNode!=null && !nextNode.equals(nodeAddress))
+			return CommunicationHandler.sendRequest(nextNode, "RQPNGPRE_"+nodeAddress.getAddress().toString()+":"+nodeAddress.getPort());
 		else
 			return null;
 	}
@@ -112,12 +137,12 @@ public class Node {
 	 *       returns nothing
 	 */
 	public void notified (InetSocketAddress newpre) {
-		if (predecessor == null || predecessor.equals(localAddress)) {
+		if (prevNode == null || prevNode.equals(nodeAddress)) {
 			this.setPredecessor(newpre);
 		}
 		else {
-			long oldPreId = Handler.hashSocketAddress(predecessor);
-			long localRelativeId = Handler.computeRelativeId(localHash, oldPreId);
+			long oldPreId = Handler.hashSocketAddress(prevNode);
+			long localRelativeId = Handler.computeRelativeId(nodeID, oldPreId);
 			long newpreRelativeId = Handler.computeRelativeId(Handler.hashSocketAddress(newpre), oldPreId);
 			if (newpreRelativeId > 0 && newpreRelativeId < localRelativeId)
 				this.setPredecessor(newpre);
@@ -132,12 +157,12 @@ public class Node {
 		InetSocketAddress pre = find_predecessor(id);
 
 		// If predecessor is not the local node - then request the nextNode
-		if (!pre.equals(localAddress))
-			ret = Handler.requestAddress(pre, "YOURSUCC");
+		if (!pre.equals(nodeAddress))
+			ret = Handler.requestAddress(pre, "RQCSC");
 
 		// Return the local address in case of no nextNode found
 		if (ret == null)
-			ret = localAddress;
+			ret = nodeAddress;
 
 		return ret;
 	}
@@ -151,9 +176,9 @@ public class Node {
 	 *      return the valid predecessor for the requested ID
 	 */
 	private InetSocketAddress find_predecessor (long findid) {
-		InetSocketAddress curNode = this.localAddress;
+		InetSocketAddress curNode = this.nodeAddress;
 		InetSocketAddress curNodeSuccessor = this.getSuccessor();
-		InetSocketAddress mostRecentlyAlive = this.localAddress;
+		InetSocketAddress mostRecentlyAlive = this.nodeAddress;
 		long curNodeSuccessorRelativeId = 0;
 		if (curNodeSuccessor != null)
 			curNodeSuccessorRelativeId = Handler.computeRelativeId(Handler.hashSocketAddress(curNodeSuccessor), Handler.hashSocketAddress(curNode));
@@ -165,21 +190,21 @@ public class Node {
 			InetSocketAddress tempCurNode = curNode;
 
 			// Current node and local node same - return the preceding finger which is nearest
-			if (curNode.equals(this.localAddress)) {
-				curNode = this.closest_preceding_finger(findid);
+			if (curNode.equals(this.nodeAddress)) {
+				curNode = this.closestFingerEntry(findid);
 			}
 
 			// Otherwise fetch the nearest node of the requested node
 			else {
-				InetSocketAddress result = Handler.requestAddress(curNode, "CLOSEST_" + findid);
+				InetSocketAddress result = Handler.requestAddress(curNode, "RQIM_" + findid);
 
 				// Absence of response, fetch the nextNode current node 
 				if (result == null) {
 					curNode = mostRecentlyAlive;
-					curNodeSuccessor = Handler.requestAddress(curNode, "YOURSUCC");
+					curNodeSuccessor = Handler.requestAddress(curNode, "RQCSC");
 					if (curNodeSuccessor==null) {
 						System.out.println("It's not possible.");
-						return localAddress;
+						return nodeAddress;
 					}
 					continue;
 				}
@@ -193,14 +218,14 @@ public class Node {
 					// The recently active node is assigned as the current node
 					mostRecentlyAlive = curNode;		
 					// request the sucessor of the resultant node
-					curNodeSuccessor = Handler.requestAddress(result, "YOURSUCC");	
+					curNodeSuccessor = Handler.requestAddress(result, "RQCSC");	
 					// On response, current node is the result node
 					if (curNodeSuccessor!=null) {
 						curNode = result;
 					}
 					// On no response/null response - we request the nextNode of the current node
 					else {
-						curNodeSuccessor = Handler.requestAddress(curNode, "YOURSUCC");
+						curNodeSuccessor = Handler.requestAddress(curNode, "RQCSC");
 					}
 				}
 
@@ -222,8 +247,8 @@ public class Node {
 	 * Returns:
 	 *       closest finger preceding node's socket address
 	 */
-	public InetSocketAddress closest_preceding_finger (long findid) {
-		long findidRelative = Handler.computeRelativeId(findid, localHash);
+	public InetSocketAddress closestFingerEntry(long findid) {
+		long findidRelative = Handler.computeRelativeId(findid, nodeID);
 
 		// check the finger tables from the nodes with the maximum hops/distance
 		for (int i = 32; i > 0; i--) {
@@ -232,14 +257,14 @@ public class Node {
 				continue;
 			}
 			long ithFingerId = Handler.hashSocketAddress(ithFinger);
-			long ithFingerRelativeId = Handler.computeRelativeId(ithFingerId, localHash);
+			long ithFingerRelativeId = Handler.computeRelativeId(ithFingerId, nodeID);
 
 			// In case of relative id being nearest - check for life
 			if (ithFingerRelativeId > 0 && ithFingerRelativeId < findidRelative)  {
-				String response  = CommunicationHandler.sendRequest(ithFinger, "KEEP");
+				String response  = CommunicationHandler.sendRequest(ithFinger, "RQALV");
 
 				//If alive, return the same
-				if (response!=null &&  response.equals("ALIVE")) {
+				if (response!=null &&  response.equals("RPALV")) {
 					return ithFinger;
 				}
 
@@ -249,7 +274,7 @@ public class Node {
 				}
 			}
 		}
-		return localAddress;
+		return nodeAddress;
 	}
 
 
@@ -300,7 +325,7 @@ public class Node {
 	private void updateIthFinger(int i, InetSocketAddress value) {
 		fingerTable.put(i, value);
 		// if new is the local node - notify accordingly to the nextNode
-		if (i == 1 && value != null && !value.equals(localAddress)) {
+		if (i == 1 && value != null && !value.equals(nodeAddress)) {
 			notify(value);
 		}
 	}
@@ -329,7 +354,7 @@ public class Node {
 		}
 
 		// if predecessor is nextNode, delete it
-		if (predecessor!= null && predecessor.equals(nextNode))
+		if (prevNode!= null && prevNode.equals(nextNode))
 			setPredecessor(null);
 
 		// try to fill nextNode
@@ -339,18 +364,18 @@ public class Node {
 		// if nextNode is still null or local node, 
 		// and the predecessor is another node, keep asking 
 		// it's predecessor until find local node's new nextNode
-		if ((nextNode == null || nextNode.equals(nextNode)) && predecessor!=null && !predecessor.equals(localAddress)) {
-			InetSocketAddress p = predecessor;
+		if ((nextNode == null || nextNode.equals(nextNode)) && prevNode!=null && !prevNode.equals(nodeAddress)) {
+			InetSocketAddress p = prevNode;
 			InetSocketAddress pPre = null;
 			while (true) {
-				pPre = Handler.requestAddress(p, "YOURPRE");
+				pPre = Handler.requestAddress(p, "RQEPR");
 				if (pPre == null)
 					break;
 
 				// if p's predecessor is node is just deleted, 
 				// or itself (nothing found in p), or local address,
 				// p is current node's new nextNode, break
-				if (pPre.equals(p) || pPre.equals(localAddress)|| pPre.equals(nextNode)) {
+				if (pPre.equals(p) || pPre.equals(nodeAddress)|| pPre.equals(nextNode)) {
 					break;
 				}
 
@@ -386,10 +411,10 @@ public class Node {
 	 */
 	private void fillSuccessor() {
 		InetSocketAddress nextNode = this.getSuccessor();
-		if (nextNode == null || nextNode.equals(localAddress)) {
+		if (nextNode == null || nextNode.equals(nodeAddress)) {
 			for (int i = 2; i <= 32; i++) {
 				InetSocketAddress ithFinger = fingerTable.get(i);
-				if (ithFinger!=null && !ithFinger.equals(localAddress)) {
+				if (ithFinger!=null && !ithFinger.equals(nodeAddress)) {
 					for (int j = i-1; j >=1; j--) {
 						updateIthFinger(j, ithFinger);
 					}
@@ -398,8 +423,8 @@ public class Node {
 			}
 		}
 		nextNode = getSuccessor();
-		if ((nextNode == null || nextNode.equals(localAddress)) && predecessor!=null && !predecessor.equals(localAddress)) {
-			updateIthFinger(1, predecessor);
+		if ((nextNode == null || nextNode.equals(nodeAddress)) && prevNode!=null && !prevNode.equals(nodeAddress)) {
+			updateIthFinger(1, prevNode);
 		}
 
 	}
@@ -421,37 +446,11 @@ public class Node {
 	 *       returns nothing
 	 */
 	private synchronized void setPredecessor(InetSocketAddress pre) {
-		predecessor = pre;
+		prevNode = pre;
 	}
 
 
-	/**
-	 * Getters
-	 * Args:
-	 *       No arguments
-	 *
-	 * Returns:
-	 *       The hash value/address/predecessor/nextNodes
-	 */
-
-	public long getId() {
-		return localHash;
-	}
-
-	public InetSocketAddress getAddress() {
-		return localAddress;
-	}
-
-	public InetSocketAddress getPredecessor() {
-		return predecessor;
-	}
-
-	public InetSocketAddress getSuccessor() {
-		if (fingerTable != null && fingerTable.size() > 0) {
-			return fingerTable.get(1);
-		}
-		return null;
-	}
+	
 
 	/**
 	 * Printing functionalities
@@ -464,13 +463,13 @@ public class Node {
 
 	public void displayNodeInformation(String currentIP) {
 		System.out.println("\n************ Current Node Information ***************");
-		Long nodeID = Handler.hashSocketAddress(localAddress);
-		System.out.println("Current Node Access point:\n\tIP Address: "+currentIP+"\n\tPort: "+localAddress.getPort()+"\n\tNode ID: "+nodeID);
+		Long nodeID = Handler.hashSocketAddress(nodeAddress);
+		System.out.println("Current Node Access point:\n\tIP Address: "+currentIP+"\n\tPort: "+nodeAddress.getPort()+"\n\tNode ID: "+nodeID);
 		InetSocketAddress nextNode = fingerTable.get(1);
 		// update that the nextNode and predecessor as pointing to the current node in case of absence
 		System.out.println("\nNode Successor and Predecessor Information");
 		System.out.println("---------------------------------------------");
-		if ((predecessor == null || predecessor.equals(localAddress)) && (nextNode == null || nextNode.equals(localAddress))) {
+		if ((prevNode == null || prevNode.equals(nodeAddress)) && (nextNode == null || nextNode.equals(nodeAddress))) {
 			System.out.println("Predecessor: None");
 			System.out.println("Successor: None");
 			System.out.println("This Node is the only running node in the Ring");
@@ -479,9 +478,9 @@ public class Node {
 		
 		// Otherwise assign it as null
 		else {
-			if (predecessor != null) {
-				System.out.println("Predecessor: "+predecessor.getAddress().toString()+", "
-						+ "port "+predecessor.getPort()+ ", position "+Handler.hashSocketAddress(predecessor)+".");
+			if (prevNode != null) {
+				System.out.println("Predecessor: "+prevNode.getAddress().toString()+", "
+						+ "port "+prevNode.getPort()+ ", position "+Handler.hashSocketAddress(prevNode)+".");
 			}
 			else {
 				System.out.println("Predecessor is in the process of joining/updating.");
@@ -502,7 +501,7 @@ public class Node {
 		System.out.println("#\tNode Address (IP Address:Port)\tNodeID");
 		System.out.println("\n**********************************************************************************");
 		for (int i = 1; i <= 32; i++) {
-			long ithstart = Handler.ithStart(Handler.hashSocketAddress(localAddress),i);
+			long ithstart = Handler.ithStart(Handler.hashSocketAddress(nodeAddress),i);
 			InetSocketAddress fingerTableEntry = fingerTable.get(i);
 			StringBuilder sb = new StringBuilder();
 			sb.append(i+"\t"+ "\t");
@@ -527,14 +526,14 @@ public class Node {
 		InetSocketAddress nextNode = this.getSuccessor();
 		if(nextNode != null)
 			this.handFilesOver(nextNode);
-		if (listener != null)
-			listener.kill();
-		if (fixFt != null)
-			fixFt.kill();
-		if (stabilization != null)
-			stabilization.kill();
-		if (heartBeatMonitor != null)
-			heartBeatMonitor.kill();
+		if (listenerObj != null)
+			listenerObj.kill();
+		if (fingerTableObj != null)
+			fingerTableObj.kill();
+		if (stabilizeObj != null)
+			stabilizeObj.kill();
+		if (heartBeatObj != null)
+			heartBeatObj.kill();
 	}
 
 	/* ******************************** Node File System ************************************** */
@@ -568,8 +567,8 @@ public class Node {
 
 	public void fileExchange()
 	{
-		InetSocketAddress nextNode = this.find_nextNode(localHash);
-		String request = "REQFILE_"+localHash;
+		InetSocketAddress nextNode = this.find_nextNode(nodeID);
+		String request = "RQFILE_"+nodeID;
 		String response = CommunicationHandler.sendRequest(nextNode, request);
 		String[] splitResponse = response.split("_");
 		if(splitResponse[1].equals("NOFILE"))
@@ -641,7 +640,7 @@ public class Node {
 
 	public boolean handFilesOver(InetSocketAddress nextNode)
 	{
-		String request = "FILETX";
+		String request = "RQFTX";
 		ArrayList<Long> removeList = new ArrayList<Long>();
 		for(long fileId: this.filesTable.keySet())
 		{
@@ -650,7 +649,7 @@ public class Node {
 		}
 		String response = CommunicationHandler.sendRequest(nextNode, request);
 
-		if(response.equals("OK"))
+		if(response.equals("RPFTXCMP"))
 		{
 			if(!removeList.isEmpty()){
 				for(long hashId:removeList)

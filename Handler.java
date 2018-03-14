@@ -166,7 +166,7 @@ public class Handler {
 			return null;
 		}
 		// or return server itself 
-		else if (response.startsWith("NOTHING"))
+		else if (response.startsWith("NRP"))
 			return server;
 		// return the created socket address
 		else {
@@ -220,9 +220,9 @@ public class Handler {
 
 	public static InetSocketAddress fileSearch(InetSocketAddress localAddress, long hashValue)
 	{
-		InetSocketAddress nodeAddr = Handler.requestAddress(localAddress, "FINDSUCC_"+hashValue);
-		String response = CommunicationHandler.sendRequest(nodeAddr, "CHECKFILE_"+hashValue);
-		if(response.equals("EXISTS"))
+		InetSocketAddress nodeAddr = Handler.requestAddress(localAddress, "RQFSC_"+hashValue);
+		String response = CommunicationHandler.sendRequest(nodeAddr, "RQCHF_"+hashValue);
+		if(response.equals("RPEXISTS"))
 			return nodeAddr;
 		return null;
 	}

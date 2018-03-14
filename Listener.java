@@ -1,7 +1,5 @@
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.io.*;
+import java.net.*;
 
 /**
  * Listener thread that keeps listening to a port and asks talker thread to process
@@ -13,38 +11,41 @@ import java.net.Socket;
  */
 
 public class Listener extends Thread {
-
-	private Node local;
-	private ServerSocket serverSocket;
+	private Node currentNode;
+	private ServerSocket listenerSocket;
 	private boolean status;
 
-	public Listener (Node n) {
-		local = n;
-		status = true;
-		InetSocketAddress localAddress = local.getAddress();
-		int port = localAddress.getPort();
-
-		//open server/listener socket
-		try {
-			serverSocket = new ServerSocket(port);
-		} catch (IOException e) {
-			throw new RuntimeException("\nCannot open listener port "+port+". Now exit.\n", e);
+	public Listener (Node currentNode) {
+		this.currentNode = currentNode;
+		this.status = true;
+		InetSocketAddress currNodeAddr = currentNode.getAddress();
+		int nodePort = currNodeAddr.getPort();
+		// Create server socket to listen for incoming connections
+		try 
+		{
+			listenerSocket = new ServerSocket(nodePort);
+		} 
+		catch (Exception e) 
+		{
+			System.out.println("Cannot create socket");
 		}
 	}
 
 	@Override
 	public void run() {
-		while (status) {
-			Socket talkSocket = null;
-			try {
-				talkSocket = serverSocket.accept();
-			} catch (IOException e) {
-				throw new RuntimeException(
-						"Cannot accepting connection", e);
+		while (status) 
+		{
+			Socket receiverSock = null;
+			try 
+			{
+				receiverSock = listenerSocket.accept();
+			} 
+			catch (Exception e) 
+			{
+				System.out.println("Cannot establish communication");
 			}
-
-			//new talker
-			new Thread(new Talker(talkSocket, local)).start();
+			// Create a Receiver thread to handle incoming requests
+			new Thread(new Receiver(receiverSock, currentNode)).start();
 		}
 	}
 

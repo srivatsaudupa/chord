@@ -57,7 +57,7 @@ public class Receiver implements Runnable{
 			// CLOSEST
 			case "RQIM":
 						hashId = Long.parseLong(request.split("_")[1]);
-						resNodeAddr = currentNode.closest_preceding_finger(hashId);
+						resNodeAddr = currentNode.closestFingerEntry(hashId);
 						nodeIP = resNodeAddr.getAddress().toString();
 						nodePort = resNodeAddr.getPort();
 						retMsg = "RPIM_"+nodeIP+":"+nodePort;
@@ -116,7 +116,8 @@ public class Receiver implements Runnable{
 						hashId = Long.parseLong(reqString[1]) ;
 						if(currentNode.nodeHasFile(hashId))
 							retMsg = "RPEXISTS";
-						retMsg = "RPNFL";
+						else
+							retMsg = "RPNFL";
 				break;
 			// IAMPRE
 			case "RQPNGPRE":

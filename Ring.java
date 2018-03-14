@@ -60,7 +60,7 @@ public class Ring {
 		}
 		
 		// Join the ring.
-		boolean joined = currentNodeObj.join(requestingNode);
+		boolean joined = currentNodeObj.joinRing(requestingNode);
 		
 		// Check for create or join failure 
 		if (!joined) {

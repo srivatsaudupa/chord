@@ -18,8 +18,8 @@ public class HeartBeat extends Thread {
 		while (heartBeatStatus) {
 			InetSocketAddress prevNode = current.getPredecessor();
 			if (prevNode != null) {
-				String response = CommunicationHandler.sendRequest(prevNode, "KEEP");
-				if (response == null || !response.equals("ALIVE")) {
+				String response = CommunicationHandler.sendRequest(prevNode, "RQALV");
+				if (response == null || !response.equals("RPALV")) {
 					current.clearPredecessor();	
 				}
 

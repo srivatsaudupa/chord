@@ -40,7 +40,7 @@ public class Search{
 			System.out.println("******************************************************************************************");
 			boolean predStatus = false;
 			boolean succStatus = false;
-			InetSocketAddress predNodeAddr = Handler.requestAddress(currentAddress, "RPEPR");			
+			InetSocketAddress predNodeAddr = Handler.requestAddress(currentAddress, "RQEPR");			
 			InetSocketAddress succNodeAddr = Handler.requestAddress(currentAddress, "RQCSC");
 			if (predNodeAddr == null || succNodeAddr == null) {
 				System.out.println("Error: Could not connect to the node.");
@@ -54,7 +54,7 @@ public class Search{
 			// Validity - if both predecessor and successor or both are unavailable
 			while (predStatus^succStatus) {
 				System.out.println("System is stabilizing...");
-				predNodeAddr = Handler.requestAddress(currentAddress, "RPEPR");			
+				predNodeAddr = Handler.requestAddress(currentAddress, "RQEPR");			
 				succNodeAddr = Handler.requestAddress(currentAddress, "RQCSC");
 				if (predNodeAddr == null || succNodeAddr == null) {
 					System.out.println("Error: Could not connect to the node");
