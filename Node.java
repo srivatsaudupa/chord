@@ -1,8 +1,8 @@
 
 /**
  * Node - representing each IP joining the chord ring
- * @author Anusha
- * @author Srivatsa
+ * @author Anusha Naik
+ * @author Srivatsa Udupa
  * @author Prarthana Raghavan
  *
  */
