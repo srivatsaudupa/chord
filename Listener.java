@@ -4,9 +4,9 @@ import java.net.*;
 /**
  * Listener thread that keeps listening to a port and asks talker thread to process
  * when a request is accepted.
- * @author Anusha
+ * @author Anusha Naik
  * @author Prarthana Raghavan
- * @author Srivatsa
+ * @author Srivatsa Udupa
  *
  */
 
