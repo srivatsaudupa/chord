@@ -11,9 +11,6 @@ import java.net.*;
 */
 
 public class CommunicationHandler {
-	/* *********************************************************************************************** */
-	/* 									Communication Handlers 										   */
-	/* *********************************************************************************************** */
 	/* 1. Request Send */
 	public static String sendRequest(InetSocketAddress server, String request) {
 		/* Validate Request */
